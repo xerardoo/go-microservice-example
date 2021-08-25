@@ -11,7 +11,7 @@ type Repos struct {
 	Db *sql.DB
 }
 
-func (r *Repos) GetCustomerById(ctx context.Context, id string) (Customer, error) {
+func (r *Repos) GetCustomerById(ctx context.Context, id uint) (Customer, error) {
 	panic("implement me")
 }
 
@@ -27,7 +27,7 @@ func (r *Repos) UpdateCustomer(ctx context.Context, customer Customer) (string, 
 	panic("implement me")
 }
 
-func (r *Repos) DeleteCustomer(ctx context.Context) error {
+func (r *Repos) DeleteCustomer(ctx context.Context, id uint) error {
 	panic("implement me")
 }
 

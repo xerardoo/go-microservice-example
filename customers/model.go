@@ -17,9 +17,9 @@ type Customer struct {
 }
 
 type Repository interface {
-	GetCustomerById(ctx context.Context, id string) (Customer, error)
+	GetCustomerById(ctx context.Context, id uint) (Customer, error)
 	GetAllCustomers(ctx context.Context) ([]Customer, error)
 	CreateCustomer(ctx context.Context, customer Customer) (string, error)
 	UpdateCustomer(ctx context.Context, customer Customer) (string, error)
-	DeleteCustomer(ctx context.Context) error
+	DeleteCustomer(ctx context.Context, id uint) error
 }

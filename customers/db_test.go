@@ -66,7 +66,7 @@ var _ = Describe("Customer", func() {
 			query := "SELECT * FROM `customers`"
 			newId := uint(faker.Number().NumberInt32(4))
 			rows := sqlmock.
-				NewRows([]string{"id", "first_name", "last_name", "phone", "address", "city", "state", "zip_code"}).
+				NewRows([]string{"id", "first_name", "last_name", "phone_number", "address", "city", "state", "zip_code"}).
 				AddRow(customer.ID, customer.FirstName, customer.LastName, customer.PhoneNumber, customer.Address, customer.City, customer.State, customer.ZipCode).
 				AddRow(newId, customer.FirstName, customer.LastName, customer.PhoneNumber, customer.Address, customer.City, customer.State, customer.ZipCode)
 			mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
@@ -76,6 +76,101 @@ var _ = Describe("Customer", func() {
 			Expect(c[0].ID).Should(Equal(customer.ID))
 			Expect(c[0].FirstName).Should(Equal(customer.FirstName))
 			Expect(c[1].ID).Should(Equal(newId))
+		})
+	})
+
+	Context("Find One", func() {
+
+		It("Empty", func() {
+			query := "SELECT * FROM `customers` WHERE `customers`.`id` = ?"
+			rows := sqlmock.NewRows(nil)
+			mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
+
+			_, err := repo.GetCustomerById(ctx, customer.ID)
+			Expect(err).Should(Equal(gorm.ErrRecordNotFound))
+		})
+
+		It("Exist", func() {
+			query := "SELECT * FROM `customers` WHERE `customers`.`id` = ?"
+			rows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "phone_number", "address", "city", "state", "zip_code"}).
+				AddRow(customer.ID, customer.FirstName, customer.LastName, customer.PhoneNumber, customer.Address, customer.City, customer.State, customer.ZipCode)
+			mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
+
+			c, err := repo.GetCustomerById(ctx, customer.ID)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(c.ID).Should(Equal(customer.ID))
+			Expect(c.FirstName).Should(Equal(customer.FirstName))
+		})
+	})
+
+	Context("Save", func() {
+
+		It("Add", func() {
+			query := "INSERT INTO `customers` (`created_at`,`updated_at`,`deleted_at`,`first_name`,`last_name`,`phone_number`,`address`,`city`,`state`,`zip_code`,`id`) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+
+			mock.ExpectBegin()
+			mock.ExpectExec(regexp.QuoteMeta(query)).
+				WithArgs(
+					sqlmock.AnyArg(),
+					sqlmock.AnyArg(),
+					sqlmock.AnyArg(),
+					customer.FirstName,
+					customer.LastName,
+					customer.PhoneNumber,
+					customer.Address,
+					customer.City,
+					customer.State,
+					customer.ZipCode,
+					customer.ID,
+				).
+				WillReturnResult(sqlmock.NewResult(int64(customer.ID), 1))
+			mock.ExpectCommit()
+
+			_, err := repo.CreateCustomer(ctx, customer)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("Update", func() {
+			query := "UPDATE `customers` SET `created_at`=?,`updated_at`=?,`deleted_at`=?,`first_name`=?,`last_name`=?,`phone_number`=?,`address`=?,`city`=?,`state`=?,`zip_code`=? WHERE `id` = ?"
+			customer.ID = 1
+
+			mock.ExpectBegin()
+			mock.ExpectExec(regexp.QuoteMeta(query)).
+				WithArgs(
+					sqlmock.AnyArg(),
+					sqlmock.AnyArg(),
+					sqlmock.AnyArg(),
+					customer.FirstName,
+					customer.LastName,
+					customer.PhoneNumber,
+					customer.Address,
+					customer.City,
+					customer.State,
+					customer.ZipCode,
+					customer.ID,
+				).WillReturnResult(sqlmock.NewResult(int64(customer.ID), 1))
+			mock.ExpectCommit()
+
+			_, err := repo.UpdateCustomer(ctx, customer)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("Delete", func() {
+		It("Soft-Delete", func() {
+			query := " UPDATE `customers` SET `deleted_at`=? WHERE `customers`.`id` = ? AND `customers`.`deleted_at` IS NULL"
+
+			mock.ExpectBegin()
+			mock.ExpectExec(regexp.QuoteMeta(query)).
+				WithArgs(
+					sqlmock.AnyArg(),
+					customer.ID,
+				).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+			mock.ExpectCommit()
+
+			err := repo.DeleteCustomer(ctx, customer.ID)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 })
